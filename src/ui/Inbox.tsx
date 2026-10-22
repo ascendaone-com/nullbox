@@ -1,6 +1,7 @@
 import { Box, Text, useApp, useInput, useWindowSize } from "ink";
 import { useEffect, useState } from "react";
 import { age, type Item, type Reason } from "../inbox.js";
+import { Body } from "./Body.js";
 import { Mark } from "./Composer.js";
 import { colors, glyphs } from "./theme.js";
 import { wrap } from "./wrap.js";
@@ -69,10 +70,8 @@ function Row({ item, index, selected, wide }: { item: Item; index: number; selec
   );
 }
 
-/** The selected item in full, or near enough: up to five lines, with @mentions in blue. */
+/** The selected item in full, or near enough: up to six lines, code and all. */
 function Preview({ item, width }: { item: Item; width: number }) {
-  const lines = wrap(item.body.replace(/\n{3,}/g, "\n\n"), width - 5);
-  const shown = lines.slice(0, 5);
   return (
     <Box marginTop={1} marginLeft={2} paddingLeft={1} borderStyle="single" borderTop={false} borderRight={false} borderBottom={false} borderDimColor flexDirection="column">
       {wrap(`@${item.author} · ${age(item.createdAt)} · ${item.shortHash}${item.reason === "replies" ? " · your commit, o to read the replies" : ""}`, width - 5).map((line, i) => (
@@ -80,20 +79,7 @@ function Preview({ item, width }: { item: Item; width: number }) {
           {line}
         </Text>
       ))}
-      {shown.map((line, i) => (
-        <Text key={i}>
-          {line.split(/(@[A-Za-z0-9-]+)/).map((part, j) =>
-            part.startsWith("@") ? (
-              <Text key={j} color={colors.blue}>
-                {part}
-              </Text>
-            ) : (
-              part
-            ),
-          )}
-          {i === shown.length - 1 && lines.length > shown.length ? <Text dimColor> …</Text> : null}
-        </Text>
-      ))}
+      <Body text={item.body} width={width - 5} maxLines={6} />
     </Box>
   );
 }

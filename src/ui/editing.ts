@@ -10,12 +10,12 @@ export interface EditState {
 
 export const empty = (value = ""): EditState => ({ value, cursor: value.length });
 
-/** Pasted or typed text, with line endings made \n, tabs made spaces, and every other control character dropped. */
+/**
+ * Pasted or typed text, with line endings made \n and every other control character dropped. Tabs stay, since code
+ * like Go or a Makefile needs them; they're only drawn as spaces.
+ */
 export function clean(text: string): string {
-  return text
-    .replace(/\r\n?/g, "\n")
-    .replace(/\t/g, "  ")
-    .replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "");
+  return text.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "");
 }
 
 export function insert(state: EditState, text: string): EditState {

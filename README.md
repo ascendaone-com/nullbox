@@ -125,11 +125,26 @@ nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends 
 | --- | --- |
 | `enter` | send |
 | `\` then `enter`, `option+enter`, or `ctrl+j` | new line |
+| ```` ```lang ```` then `enter` | start a code block: inside it, `enter` adds lines and `tab` indents; close it with ```` ``` ```` to send |
 | `←` `→` `↑` `↓`, `ctrl+a` / `ctrl+e` | move the cursor |
 | `ctrl+u` / `ctrl+k` / `ctrl+w` | delete to line start / line end / previous word |
 | `esc` | cancel (press twice if you've typed something) |
 
 Passing a link shows who you're replying to and what they said.
+
+**Code.** /dev/null renders Markdown code: fenced blocks (```` ```ts ````, ```` ```go ````, …) and inline `` `code` ``. nullbox follows the same rule as the site for what counts as code. It highlights a block as you type it (about 37 common languages), keeps tabs and blank lines inside code, and frames and colours code wherever it shows a commit. A counter appears as you get near /dev/null's 4,000-character limit.
+
+```text
+╭──────────────────────────────────────────────────────────────╮
+│ › Like this:                                                 │
+│   ```go                                                      │
+│ │ func main() {                                              │
+│ │   fmt.Println("hi") // greet                               │
+│ │ }                                                          │
+│   ```█                                                       │
+╰──────────────────────────────────────────────────────────────╯
+  enter send · \⏎ new line · ``` code · esc cancel
+```
 
 Once it's published, this will be `npx nullbox`.
 

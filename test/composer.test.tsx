@@ -88,6 +88,29 @@ describe("Composer", () => {
     expect(results).toEqual([{ kind: "cancel" }]);
   });
 
+  it("writes code in a block: enter adds lines and tab indents until the fence is closed", async () => {
+    const { stdin, results, lastFrame } = setup();
+    await tick();
+    await type(stdin, "Try:", "\\", "\r", "```go", "\r", "func main() {", "\r", "\t", "return", "\r", "}", "\r");
+    expect(results).toEqual([]);
+    expect(lastFrame()).toContain("close with ``` to send");
+    await type(stdin, "```", "\r");
+    expect(results).toEqual([{ kind: "send", text: "Try:\n```go\nfunc main() {\n\treturn\n}\n```" }]);
+  });
+
+  it("keeps a backslash in code rather than treating it as a new line", async () => {
+    const { stdin, results } = setup();
+    await tick();
+    await type(stdin, "```sh", "\r", "echo a \\", "\r", "  b", "\r", "```", "\r");
+    expect(results).toEqual([{ kind: "send", text: "```sh\necho a \\\n  b\n```" }]);
+  });
+
+  it("shows a counter near /dev/null's 4,000 character limit", async () => {
+    const { lastFrame } = setup({ initial: "x".repeat(3900) });
+    await tick();
+    expect(lastFrame()).toContain("3,900/4,000");
+  });
+
   it("marks a dry run", async () => {
     const { lastFrame } = setup({ dryRun: true });
     await tick();

@@ -13,9 +13,9 @@ function show({ value, cursor }: EditState): string {
 }
 
 describe("editing", () => {
-  it("inserts at the cursor and cleans pasted text", () => {
+  it("inserts at the cursor and cleans pasted text, keeping tabs", () => {
     expect(show(edit.insert(s("a|c"), "b"))).toBe("ab|c");
-    expect(show(edit.insert(s("|"), "one\r\ntwo\rthree\tx\u001b[31m"))).toBe("one\ntwo\nthree  x[31m|");
+    expect(show(edit.insert(s("|"), "one\r\ntwo\rthree\tx\u001b[31m"))).toBe("one\ntwo\nthree\tx[31m|");
   });
 
   it("deletes backwards and forwards", () => {

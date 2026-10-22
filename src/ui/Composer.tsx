@@ -1,8 +1,10 @@
 import { Box, Text, useApp, useInput, usePaste, useWindowSize } from "ink";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { analyze, length, MAX_LENGTH, type Analysis } from "../code.js";
+import { Body } from "./Body.js";
 import * as edit from "./editing.js";
+import { Runs } from "./Styled.js";
 import { colors, glyphs } from "./theme.js";
-import { wrap } from "./wrap.js";
 
 export interface Parent {
   username?: string;
@@ -20,7 +22,7 @@ export interface ComposerProps {
   onDone: (result: ComposeResult) => void;
 }
 
-const MAX_QUOTE_LINES = 4;
+const MAX_QUOTE_LINES = 6;
 
 /** The // of the /dev/null logo, then the name. */
 export function Mark() {
@@ -32,27 +34,8 @@ export function Mark() {
   );
 }
 
-/** A line of a commit, with @mentions in blue as /dev/null shows them. */
-function WithMentions({ line }: { line: string }) {
-  return (
-    <>
-      {line.split(/(@[A-Za-z0-9-]+)/).map((part, i) =>
-        part.startsWith("@") ? (
-          <Text key={i} color={colors.blue}>
-            {part}
-          </Text>
-        ) : (
-          part
-        ),
-      )}
-    </>
-  );
-}
-
 function Header({ replyTo, parent }: Pick<ComposerProps, "replyTo" | "parent">) {
   const { columns } = useWindowSize();
-  const quote = wrap((parent?.body ?? "").trim().replace(/\n{3,}/g, "\n\n"), columns - 4);
-  const shown = quote.slice(0, MAX_QUOTE_LINES);
   const target = parent?.username ? `@${parent.username}` : replyTo;
 
   return (
@@ -82,23 +65,23 @@ function Header({ replyTo, parent }: Pick<ComposerProps, "replyTo" | "parent">) 
           borderDimColor
           flexDirection="column"
         >
-          {shown.map((line, i) => (
-            <Text key={i}>
-              <WithMentions line={line} />
-              {i === shown.length - 1 && quote.length > shown.length ? <Text dimColor> …</Text> : null}
-            </Text>
-          ))}
+          <Body text={parent.body} width={columns - 4} maxLines={MAX_QUOTE_LINES} />
         </Box>
       ) : null}
     </Box>
   );
 }
 
-/** The text with an inverse block where the cursor is, one Text per line, the first behind the prompt mark. */
-function Lines({ state, placeholder }: { state: edit.EditState; placeholder: string }) {
+/**
+ * The text, coloured as /dev/null will show it: code blocks highlighted (as soon as you open one), inline code and
+ * @mentions picked out, and a dim gutter beside the lines of a block. The cursor is an inverse block.
+ */
+function Lines({ state, analysis, placeholder }: { state: edit.EditState; analysis: Analysis; placeholder: string }) {
   const prompt = <Text color={colors.blue}>{glyphs.prompt} </Text>;
+  const { value, cursor } = state;
+  const { styles, blocks } = analysis;
 
-  if (state.value === "") {
+  if (value === "") {
     return (
       <Text>
         {prompt}
@@ -108,30 +91,20 @@ function Lines({ state, placeholder }: { state: edit.EditState; placeholder: str
     );
   }
 
+  const inCode = (start: number) => blocks.some((block) => start >= block.codeStart && start < block.codeEnd + (block.closed ? 0 : 1));
+
   let offset = 0;
   return (
     <Box flexDirection="column">
-      {state.value.split("\n").map((line, i) => {
+      {value.split("\n").map((line, i) => {
         const start = offset;
-        offset += line.length + 1;
-        const prefix = i === 0 ? prompt : <Text>{"  "}</Text>;
-        const column = state.cursor - start;
-
-        if (column < 0 || column > line.length) {
-          return (
-            <Text key={i}>
-              {prefix}
-              {line}
-            </Text>
-          );
-        }
-
+        const end = start + line.length;
+        offset = end + 1;
+        const prefix = i === 0 ? prompt : inCode(start) ? <Text dimColor>{glyphs.quote} </Text> : <Text>{"  "}</Text>;
         return (
           <Text key={i}>
             {prefix}
-            {line.slice(0, column)}
-            <Text inverse>{line[column] ?? " "}</Text>
-            {line.slice(column + 1)}
+            <Runs text={value} styles={styles} from={start} to={end} cursor={cursor >= start && cursor <= end ? cursor : undefined} />
           </Text>
         );
       })}
@@ -139,10 +112,25 @@ function Lines({ state, placeholder }: { state: edit.EditState; placeholder: str
   );
 }
 
+/** Characters used against /dev/null's limit, once it's worth knowing. */
+function Counter({ text }: { text: string }) {
+  const used = length(text);
+  if (used < MAX_LENGTH * 0.75) return null;
+  const color = used > MAX_LENGTH ? "red" : used > MAX_LENGTH * 0.95 ? "yellow" : undefined;
+  return (
+    <Text color={color} dimColor={color === undefined}>
+      {used.toLocaleString("en")}/{MAX_LENGTH.toLocaleString("en")}
+    </Text>
+  );
+}
+
 export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerProps) {
   const { exit } = useApp();
   const [state, setState] = useState(() => edit.empty(initial));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const analysis = useMemo(() => analyze(state.value, { live: true }), [state.value]);
+  // Inside a block, between its fences, enter and tab write code; close the block to send.
+  const inBlock = analysis.blocks.some((block) => state.cursor >= block.codeStart && state.cursor <= (block.closed ? block.codeEnd : block.end));
 
   const finish = (result: ComposeResult) => {
     onDone(result);
@@ -160,6 +148,7 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
     setConfirmDiscard(false);
 
     if (key.return && key.meta) return setState(edit.insert(state, "\n"));
+    if (key.return && inBlock) return setState(edit.insert(state, "\n"));
     if (key.return) {
       const result = edit.enter(state);
       if (result.submit) return finish({ kind: "send", text: result.state.value.trim() });
@@ -193,6 +182,7 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
     if (key.downArrow) return setState(edit.vertical(state, 1));
     if (key.home) return setState(edit.home(state));
     if (key.end) return setState(edit.end(state));
+    if (key.tab && inBlock && !key.shift) return setState(edit.insert(state, "\t"));
     if (key.tab || key.meta) return;
 
     if (input !== "") setState(edit.insert(state, input));
@@ -202,11 +192,16 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
     <Box flexDirection="column">
       <Header replyTo={replyTo} parent={parent} />
       <Box borderStyle="round" borderColor={colors.blue} paddingX={1}>
-        <Lines state={state} placeholder="Write your reply…" />
+        <Lines state={state} analysis={analysis} placeholder="Write your reply…" />
       </Box>
-      <Box paddingX={2}>
+      <Box paddingX={2} justifyContent="space-between" gap={1}>
         {confirmDiscard ? (
           <Text color="yellow">Press esc again to discard your reply.</Text>
+        ) : inBlock ? (
+          <Text dimColor wrap="truncate-end">
+            <Text color={colors.slash2}>code</Text> · <Text bold>enter</Text> new line · <Text bold>tab</Text> indent · close with{" "}
+            <Text bold>```</Text> to send
+          </Text>
         ) : (
           <Text dimColor wrap="truncate-end">
             {dryRun ? (
@@ -217,9 +212,13 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
                 {" · "}
               </>
             ) : null}
-            <Text bold>enter</Text> {dryRun ? "sign" : "send"} · <Text bold>\⏎</Text> new line · <Text bold>esc</Text> cancel
+            <Text bold>enter</Text> {dryRun ? "sign" : "send"} · <Text bold>\⏎</Text> new line · <Text bold>```</Text> code ·{" "}
+            <Text bold>esc</Text> cancel
           </Text>
         )}
+        <Box flexShrink={0}>
+          <Counter text={state.value} />
+        </Box>
       </Box>
     </Box>
   );

@@ -18,7 +18,7 @@ nullbox is a standalone CLI. It talks to /dev/null's HTTP API and signs with the
 
 - **TypeScript on Node 22+**, so `npx nullbox` works with nothing to install. Use built-in `fetch`.
 - **Signing:** spawn `ssh-keygen -Y sign`. Prefer agent keys and fall back to `~/.ssh/*.pub` + private key, matching the official script. Never parse private keys in JS.
-- **UI:** [Ink](https://github.com/vadimdemedes/ink) (React for the terminal, as Claude Code uses). It has an inline multi-line composer. The editing logic lives in `src/ui/editing.ts`, kept pure so it can be tested.
+- **UI:** [Ink](https://github.com/vadimdemedes/ink) (React for the terminal, as Claude Code uses). It has an inline multi-line composer. The editing logic lives in `src/ui/editing.ts`, kept pure so it can be tested. Code is found with /dev/null's own fence pattern (`src/code.ts`, kept in sync with their `CodeSpans.php`) and highlighted with lowlight (highlight.js). `src/ui/Body.tsx` lays out a body for reading.
 - **State:** `~/.config/nullbox/state.json` (XDG on Linux), holding `{ username, keyFingerprint, items: { [commitId]: { status, seenAt, repliedAt } }, cursors }`. It keeps no message bodies.
 - **Tests:** vitest, with a recorded-fixture HTTP layer. The signing tests run against a throwaway ed25519 key generated in the test.
 
