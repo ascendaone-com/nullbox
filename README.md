@@ -47,16 +47,20 @@ Closing that last gap means contributing a CLI sign-in flow upstream. See [docs/
 nullbox isn't on npm yet. To run it from a checkout:
 
 ```bash
-git clone https://github.com/ascendaone-com/nullbox.git && cd nullbox
+git clone https://github.com/ascendaone-com/nullbox.git
+cd nullbox
 npm install
-npm link            # puts `nullbox` on your PATH
+npm link   # puts `nullbox` on your PATH
 ```
 
 ### Your inbox
 
 ```bash
-nullbox             # asks for your /dev/null username once, then remembers it
-nullbox --dry-run   # same, but replies are signed and not sent
+# Asks for your /dev/null username once, then remembers it
+nullbox
+
+# The same, but replies are signed and not sent
+nullbox --dry-run
 ```
 
 It opens on the list shown at the top of this page. Press a number (`0` is the tenth), or move with the arrows and press enter. That opens the reply box, and after you send you're back at the list. Anything you reply to, open or mark done (`d`) stays out of the list from then on.
@@ -71,25 +75,18 @@ A refresh makes about one request per person you follow, which stays well inside
 
 ### One reply
 
-Reply to a commit by its hash or its link:
-
 ```bash
+# By link: shows who and what you're replying to
 nullbox reply https://dev-null.sh/@someone/commits/01a1…
-nullbox reply 0be0130 'Agreed!'           # starts the box with your text, ready to edit
-nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends nothing
+
+# By hash, with your text in the box, ready to edit
+nullbox reply 0be0130 'Agreed!'
+
+# Find your key and sign, but send nothing
+nullbox reply --dry-run 0be0130 'test'
 ```
 
-```text
-// nullbox · replying to @engineer42                       0be0130
- │ I'm finding that reviewing AI-generated code takes longer than
- │ writing it myself sometimes.
-
-╭──────────────────────────────────────────────────────────────────╮
-│ › I'm seeing something similar. Is review getting heavier        │
-│   as you run more agents at once?█                               │
-╰──────────────────────────────────────────────────────────────────╯
-  enter send · \⏎ new line · esc cancel
-```
+It opens the same reply box as the inbox, shown in the second screen at the top of this page.
 
 | Key | Does |
 | --- | --- |
@@ -100,9 +97,7 @@ nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends 
 | `ctrl+u` / `ctrl+k` / `ctrl+w` | delete to line start / line end / previous word |
 | `esc` | cancel (press twice if you've typed something) |
 
-Passing a link shows who you're replying to and what they said.
-
-**Code.** /dev/null renders Markdown code: fenced blocks (```` ```ts ````, ```` ```go ````, …) and inline `` `code` ``. nullbox follows the same rule as the site for what counts as code. It highlights a block as you type it (about 37 common languages), keeps tabs and blank lines inside code, and frames and colours code wherever it shows a commit. A counter appears as you get near /dev/null's 4,000-character limit. See the second screen at the top of this page.
+**Code.** /dev/null renders Markdown code: fenced blocks (```` ```ts ````, ```` ```go ````, …) and inline `` `code` ``. nullbox follows the same rule as the site for what counts as code. It highlights a block as you type it (about 37 common languages), keeps tabs and blank lines inside code, and frames and colours code wherever it shows a commit. A counter appears as you get near /dev/null's 4,000-character limit.
 
 Once it's published, this will be `npx nullbox`.
 
