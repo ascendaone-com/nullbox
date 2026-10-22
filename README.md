@@ -69,12 +69,33 @@ npm link            # puts `nullbox` on your PATH
 Reply to a commit by its hash or its link:
 
 ```bash
-nullbox reply https://dev-null.sh/@someone/commits/01a1…  'Agreed!'
-nullbox reply 0be0130          # asks for the reply, or opens $EDITOR if you leave it empty
-nullbox reply --dry-run 0be0130 'test'   # finds your key and signs, but sends nothing
+nullbox reply https://dev-null.sh/@someone/commits/01a1…
+nullbox reply 0be0130 'Agreed!'           # starts the box with your text, ready to edit
+nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends nothing
 ```
 
-You always see a preview first. Press enter to send, `e` to edit in your editor, or `c` to cancel. Passing a link also shows the commit you're replying to.
+```text
+✻ nullbox · replying to @engineer42 · 0be0130
+  │ I'm finding that reviewing AI-generated code takes longer than
+  │ writing it myself sometimes.
+
+╭──────────────────────────────────────────────────────────────────╮
+│ › I'm seeing something similar. Is review getting heavier        │
+│   as you run more agents at once?█                               │
+╰──────────────────────────────────────────────────────────────────╯
+  enter send · \⏎ new line · ctrl+g editor · esc cancel
+```
+
+| Key | Does |
+| --- | --- |
+| `enter` | send |
+| `\` then `enter`, `option+enter`, or `ctrl+j` | new line |
+| `←` `→` `↑` `↓`, `ctrl+a` / `ctrl+e` | move the cursor |
+| `ctrl+u` / `ctrl+k` / `ctrl+w` | delete to line start / line end / previous word |
+| `ctrl+g` | open `$EDITOR` for a long reply (falls back to nano) |
+| `esc` | cancel (press twice if you've typed something) |
+
+Passing a link shows who you're replying to and what they said.
 
 Once it's published, this will be `npx nullbox`.
 

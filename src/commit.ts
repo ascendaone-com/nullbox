@@ -35,6 +35,8 @@ export interface CommitOptions extends KeyOptions {
   message: string;
   /** Find the key and sign, but don't send. */
   dryRun?: boolean;
+  /** Called as each step starts, so the UI can say what is happening (and why a passphrase prompt appears). */
+  onStep?: (step: "lookup" | "sign" | "send", detail?: string) => void;
 }
 
 export interface CommitResult {
@@ -45,7 +47,8 @@ export interface CommitResult {
   response?: string;
 }
 
-export async function commit({ baseUrl, replyTo, message, dryRun = false, ...keyOptions }: CommitOptions): Promise<CommitResult> {
+export async function commit({ baseUrl, replyTo, message, dryRun = false, onStep, ...keyOptions }: CommitOptions): Promise<CommitResult> {
+  onStep?.("lookup");
   const candidates = await candidateKeys(keyOptions);
   if (candidates.length === 0) throw new NullboxError("No Ed25519 or RSA SSH key found in your SSH agent or in ~/.ssh.");
 
@@ -57,10 +60,12 @@ export async function commit({ baseUrl, replyTo, message, dryRun = false, ...key
     replyTo: validateReplyTo(replyTo),
     message: validateMessage(message),
   });
+  onStep?.("sign", key);
   const signature = await sign(payload, NAMESPACE, key, keyOptions);
 
   if (dryRun) return { key, payload, signature };
 
+  onStep?.("send");
   const { body } = await request(`${baseUrl}/api/cli/commits`, {
     method: "POST",
     headers: { "Content-Type": "text/plain; charset=utf-8", "X-SSH-Signature": signature },
