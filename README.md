@@ -56,13 +56,27 @@ What /dev/null supports today:
 
 Closing that last gap means contributing a CLI sign-in flow upstream. See [docs/devnull-api.md](docs/devnull-api.md).
 
-## Install
+## Try it (0.1, replies only)
 
-Not published yet. Once it is:
+nullbox isn't on npm yet. To run it from a checkout:
 
 ```bash
-npx nullbox
+git clone https://github.com/ascendaone-com/nullbox.git && cd nullbox
+npm install
+npm link            # puts `nullbox` on your PATH
 ```
+
+Reply to a commit by its hash or its link:
+
+```bash
+nullbox reply https://dev-null.sh/@someone/commits/01a1…  'Agreed!'
+nullbox reply 0be0130          # asks for the reply, or opens $EDITOR if you leave it empty
+nullbox reply --dry-run 0be0130 'test'   # finds your key and signs, but sends nothing
+```
+
+You always see a preview first. Press enter to send, `e` to edit in your editor, or `c` to cancel. Passing a link also shows the commit you're replying to.
+
+Once it's published, this will be `npx nullbox`.
 
 ## Security model
 

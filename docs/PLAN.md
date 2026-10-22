@@ -16,7 +16,7 @@ nullbox is a standalone CLI. It talks to /dev/null's HTTP API and signs with the
 
 ## Stack
 
-- **TypeScript on Node 20+**, so `npx nullbox` works with nothing to install. Use built-in `fetch`.
+- **TypeScript on Node 22+**, so `npx nullbox` works with nothing to install. Use built-in `fetch`.
 - **Signing:** spawn `ssh-keygen -Y sign`. Prefer agent keys and fall back to `~/.ssh/*.pub` + private key, matching the official script. Never parse private keys in JS.
 - **UI:** a plain readline prompt first. Add Ink or Clack later only if the plain prompt starts to hurt. Open `$EDITOR` for multi-line replies.
 - **State:** `~/.config/nullbox/state.json` (XDG on Linux), holding `{ username, keyFingerprint, items: { [commitId]: { status, seenAt, repliedAt } }, cursors }`. It keeps no message bodies.
@@ -45,7 +45,7 @@ src/
 ## Milestones
 
 ### M0: Scaffold (½ day)
-- package.json (`bin: nullbox`), tsconfig, eslint/prettier, vitest, and a GitHub Actions CI on Node 20/22.
+- package.json (`bin: nullbox`), tsconfig, vitest (`tsc --noEmit` is the linter for now), and a GitHub Actions CI on Node 22/24.
 - `nullbox --version`.
 
 ### M1: Reply from the terminal (1–2 days)
