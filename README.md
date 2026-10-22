@@ -4,52 +4,17 @@
 
 You've been heads-down with your agents for two hours. nullbox shows you the ten conversations on /dev/null most worth coming back to. Pick a number, type your reply, done. You don't need to open a browser, though one keypress opens the thread on dev-null.sh if you want the full context.
 
-```text
-$ nullbox
-
-// nullbox · @you    2 new replies · 1 mention · 4 questions
-
-  1 @you         ↩ 2 new   Reviewing agent output takes…  1h
-› 2 @engineer42  @ you     @you how do you cap concurre… 41m
-  3 @devlin      ? asks    How are people managing five…  2h
-  4 @mara-k      ? asks    Anyone else batching reviews…  3h
-  5 @tamsin      ● 14      Hot take: the bottleneck mov…  4h
-  6 @oskar       ? asks    What's your terminal setup f…  4h
-  7 @priya       ? asks    Do you keep agents on separa…  5h
-  8 @lee         following Shipped a tiny CLI for taili…  6h
-  9 @ren         following Rails autoscaling on CPU and…  7h
-  0 @noor        following OpenTelemetry tracing withou…  8h
-
-  │ @engineer42 · 41m · 0be0130
-  │ @you how do you cap concurrency? I tried this:
-  │ ┌─ ts
-  │ │ const limit = pLimit(4);
-  │ │ await Promise.all(jobs.map((j) => limit(run, j)));
-  │ └─
-  │ but the review queue still explodes.
-
-  1-0 reply · o open · d done · r refresh · q quit
-```
+<p align="center">
+  <img src="docs/inbox.svg" alt="The nullbox inbox in a terminal: ten conversations ranked by new replies, mentions and questions, with the selected one previewed below, including a highlighted TypeScript code block." width="820">
+</p>
 
 Press `2`, and reply right there. Code blocks are highlighted as you type:
 
-```text
-// nullbox · replying to @engineer42                 0be0130
- │ @you how do you cap concurrency? I tried this:
- │ ┌─ ts
- │ │ const limit = pLimit(4);
- │ │ await Promise.all(jobs.map((j) => limit(run, j)));
- │ └─
- │ but the review queue still explodes.
+<p align="center">
+  <img src="docs/reply.svg" alt="The nullbox reply box: the commit being replied to is quoted above, and the reply below contains a highlighted TypeScript code block." width="820">
+</p>
 
-╭──────────────────────────────────────────────────────────╮
-│ › Cap the review side too. I gate merges, not runs:      │
-│   ```ts                                                  │
-│ │ const reviews = pLimit(2);                             │
-│   ```█                                                   │
-╰──────────────────────────────────────────────────────────╯
-  enter send · \⏎ new line · ``` code · esc cancel
-```
+<sub>Screens rendered from the real components with sample data (`npm run screenshot`).</sub>
 
 You type every reply yourself. nullbox never suggests reply text.
 

@@ -31,6 +31,7 @@ A PR that breaks one of these will be closed, however good the code is.
 
 - Keep each PR to one change, with tests. Signing changes need a test that checks the signature with `ssh-keygen -Y verify`.
 - Run `npm test` and `npm run lint` before you push.
+- If you change what a screen looks like, run `npm run screenshot` to regenerate `docs/inbox.svg` and `docs/reply.svg` for the README.
 - If /dev/null's API has changed, update [docs/devnull-api.md](docs/devnull-api.md) in the same PR and link the upstream commit.
 
 ## Security
