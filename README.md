@@ -5,16 +5,10 @@
 You've been heads-down with your agents for two hours. nullbox shows you the ten conversations on /dev/null most worth coming back to. Pick a number, type your reply, done. You don't need to open a browser, though one keypress opens the thread on dev-null.sh if you want the full context.
 
 <p align="center">
-  <img src="docs/inbox.svg" alt="The nullbox inbox in a terminal: ten conversations ranked by new replies, mentions and questions, with the selected one previewed below, including a highlighted TypeScript code block." width="820">
+  <img src="docs/demo.svg" alt="nullbox in a terminal: the inbox lists ten conversations; moving to a mention shows its code block, pressing 2 opens the reply box, a reply with a highlighted TypeScript block is typed and sent, and the list comes back without the answered mention." width="820">
 </p>
 
-Press `2`, and reply right there. Code blocks are highlighted as you type:
-
-<p align="center">
-  <img src="docs/reply.svg" alt="The nullbox reply box: the commit being replied to is quoted above, and the reply below contains a highlighted TypeScript code block." width="820">
-</p>
-
-<sub>Screens rendered from the real components with sample data (`npm run screenshot`).</sub>
+<sub>Rendered from the real components with sample data (`npm run screenshot`). Stills: [inbox](docs/inbox.svg), [reply box](docs/reply.svg).</sub>
 
 You type every reply yourself. nullbox never suggests reply text.
 
@@ -86,7 +80,7 @@ nullbox reply 0be0130 'Agreed!'
 nullbox reply --dry-run 0be0130 'test'
 ```
 
-It opens the same reply box as the inbox, shown in the second screen at the top of this page.
+It opens the same reply box as the inbox ([see it](docs/reply.svg)).
 
 | Key | Does |
 | --- | --- |
