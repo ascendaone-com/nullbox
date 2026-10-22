@@ -7,7 +7,7 @@ You've been heads-down with your agents for two hours. nullbox shows you the ten
 ```text
 $ nullbox
 
-  nullbox — your /dev/null inbox              7 new · 3 mentions · 2 replies
+  // nullbox — your /dev/null inbox           7 new · 3 mentions · 2 replies
 
   #   FROM            WHAT
   ─────────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ $ nullbox
   Your reply: I'm seeing something similar. Is review getting heavier
               as you run more agents at once?
 
-  [enter] send   [e] edit in $EDITOR   [c] cancel
+  enter send · \⏎ new line · esc cancel
 ```
 
 Everything after `Select:` and `Your reply:` is typed by you. nullbox never suggests reply text.
@@ -75,15 +75,15 @@ nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends 
 ```
 
 ```text
-✻ nullbox · replying to @engineer42 · 0be0130
-  │ I'm finding that reviewing AI-generated code takes longer than
-  │ writing it myself sometimes.
+// nullbox · replying to @engineer42                       0be0130
+ │ I'm finding that reviewing AI-generated code takes longer than
+ │ writing it myself sometimes.
 
 ╭──────────────────────────────────────────────────────────────────╮
 │ › I'm seeing something similar. Is review getting heavier        │
 │   as you run more agents at once?█                               │
 ╰──────────────────────────────────────────────────────────────────╯
-  enter send · \⏎ new line · ctrl+g editor · esc cancel
+  enter send · \⏎ new line · esc cancel
 ```
 
 | Key | Does |
@@ -92,7 +92,6 @@ nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends 
 | `\` then `enter`, `option+enter`, or `ctrl+j` | new line |
 | `←` `→` `↑` `↓`, `ctrl+a` / `ctrl+e` | move the cursor |
 | `ctrl+u` / `ctrl+k` / `ctrl+w` | delete to line start / line end / previous word |
-| `ctrl+g` | open `$EDITOR` for a long reply (falls back to nano) |
 | `esc` | cancel (press twice if you've typed something) |
 
 Passing a link shows who you're replying to and what they said.

@@ -1,6 +1,5 @@
 import { render } from "ink-testing-library";
 import { describe, expect, it } from "vitest";
-import { editorCommand } from "../src/prompt.js";
 import { Composer, type ComposeResult } from "../src/ui/Composer.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 20));
@@ -32,7 +31,8 @@ describe("Composer", () => {
     const { lastFrame } = setup();
     await tick();
     const frame = lastFrame() ?? "";
-    expect(frame).toContain("replying to @engineer42");
+    expect(frame).toContain("// nullbox · replying to @engineer42");
+    expect(frame).toMatch(/@engineer42\s+0be0130/);
     expect(frame).toContain("Reviewing AI code takes longer.");
     expect(frame).toContain("Write your reply…");
     expect(frame).toContain("enter send");
@@ -91,16 +91,7 @@ describe("Composer", () => {
   it("marks a dry run", async () => {
     const { lastFrame } = setup({ dryRun: true });
     await tick();
-    expect(lastFrame()).toContain("DRY RUN");
-    expect(lastFrame()).toContain("enter sign (dry run)");
-  });
-});
-
-describe("editorCommand", () => {
-  it("prefers $VISUAL, then $EDITOR, then nano, then vi", () => {
-    expect(editorCommand({ VISUAL: "code -w", EDITOR: "vim" }, () => true)).toBe("code -w");
-    expect(editorCommand({ EDITOR: "vim" }, () => true)).toBe("vim");
-    expect(editorCommand({}, () => true)).toBe("nano");
-    expect(editorCommand({}, () => false)).toBe("vi");
+    expect(lastFrame()).toContain("dry run");
+    expect(lastFrame()).toContain("enter sign");
   });
 });

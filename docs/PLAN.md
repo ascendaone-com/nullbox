@@ -18,7 +18,7 @@ nullbox is a standalone CLI. It talks to /dev/null's HTTP API and signs with the
 
 - **TypeScript on Node 22+**, so `npx nullbox` works with nothing to install. Use built-in `fetch`.
 - **Signing:** spawn `ssh-keygen -Y sign`. Prefer agent keys and fall back to `~/.ssh/*.pub` + private key, matching the official script. Never parse private keys in JS.
-- **UI:** [Ink](https://github.com/vadimdemedes/ink) (React for the terminal, as Claude Code uses). It has an inline multi-line composer, and `ctrl+g` hands off to `$EDITOR`. The editing logic lives in `src/ui/editing.ts`, kept pure so it can be tested.
+- **UI:** [Ink](https://github.com/vadimdemedes/ink) (React for the terminal, as Claude Code uses). It has an inline multi-line composer. The editing logic lives in `src/ui/editing.ts`, kept pure so it can be tested.
 - **State:** `~/.config/nullbox/state.json` (XDG on Linux), holding `{ username, keyFingerprint, items: { [commitId]: { status, seenAt, repliedAt } }, cursors }`. It keeps no message bodies.
 - **Tests:** vitest, with a recorded-fixture HTTP layer. The signing tests run against a throwaway ed25519 key generated in the test.
 
@@ -67,7 +67,7 @@ src/
 
 ### M4: Polish
 - `o` opens in the browser with `open` / `xdg-open`. When there's no display (over SSH), it prints the URL instead.
-- `d` done, `s` snooze, `$EDITOR` compose, `--json` output (which also feeds Waterline and MCP), `nullbox status` for a prompt or menu bar count.
+- `d` done, `s` snooze, `--json` output (which also feeds Waterline and MCP), `nullbox status` for a prompt or menu bar count.
 
 ## Ranking (v1: rules, not ML)
 

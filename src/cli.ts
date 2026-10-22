@@ -24,7 +24,6 @@ Options for reply:
 Writing a reply:
   enter         send
   \\ + enter     new line (option+enter and ctrl+j work too)
-  ctrl+g        open your $EDITOR
   esc           cancel (twice if you've typed something)
 
 Your reply is signed with the SSH key on your GitHub account, the same way

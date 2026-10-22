@@ -1,9 +1,7 @@
 import { Box, Text, useApp, useInput, usePaste } from "ink";
 import { useState } from "react";
-import { Cancelled } from "../errors.js";
-import { editInEditor } from "../prompt.js";
 import * as edit from "./editing.js";
-import { accent, glyphs } from "./theme.js";
+import { colors, glyphs } from "./theme.js";
 
 export interface Parent {
   username?: string;
@@ -23,36 +21,57 @@ export interface ComposerProps {
 
 const MAX_QUOTE_LINES = 4;
 
-function Header({ replyTo, parent, dryRun }: Pick<ComposerProps, "replyTo" | "parent" | "dryRun">) {
+/** The // of the /dev/null logo, then the name. */
+export function Mark() {
+  return (
+    <Text bold>
+      <Text color={colors.slash1}>/</Text>
+      <Text color={colors.slash2}>/</Text> nullbox
+    </Text>
+  );
+}
+
+/** A line of a commit, with @mentions in blue as /dev/null shows them. */
+function WithMentions({ line }: { line: string }) {
+  return (
+    <>
+      {line.split(/(@[A-Za-z0-9-]+)/).map((part, i) =>
+        part.startsWith("@") ? (
+          <Text key={i} color={colors.blue}>
+            {part}
+          </Text>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
+function Header({ replyTo, parent }: Pick<ComposerProps, "replyTo" | "parent">) {
   const quote = (parent?.body ?? "").trim().split("\n");
   const shown = quote.slice(0, MAX_QUOTE_LINES);
+  const target = parent?.username ? `@${parent.username}` : replyTo;
 
   return (
     <Box flexDirection="column" marginBottom={1}>
-      <Box gap={1}>
-        <Text color={accent} bold>
-          {glyphs.mark} nullbox
-        </Text>
-        <Text dimColor>·</Text>
-        {parent?.username ? (
-          <Text>
-            replying to <Text bold>@{parent.username}</Text>
-            {parent.shortHash ? <Text dimColor> · {parent.shortHash}</Text> : null}
+      <Box justifyContent="space-between" gap={1}>
+        <Box flexShrink={1}>
+          <Text wrap="truncate-end">
+            <Mark />
+            <Text dimColor> · replying to </Text>
+            <Text bold>{target}</Text>
           </Text>
-        ) : (
-          <Text>
-            replying to <Text bold>{replyTo}</Text>
-          </Text>
-        )}
-        {dryRun ? (
-          <Text color="yellow" bold>
-            {" "}DRY RUN{" "}
-          </Text>
+        </Box>
+        {parent?.shortHash ? (
+          <Box flexShrink={0}>
+            <Text dimColor>{parent.shortHash}</Text>
+          </Box>
         ) : null}
       </Box>
       {parent?.body ? (
         <Box
-          marginLeft={2}
+          marginLeft={1}
           paddingLeft={1}
           borderStyle="single"
           borderTop={false}
@@ -62,9 +81,9 @@ function Header({ replyTo, parent, dryRun }: Pick<ComposerProps, "replyTo" | "pa
           flexDirection="column"
         >
           {shown.map((line, i) => (
-            <Text key={i} dimColor>
-              {line}
-              {i === shown.length - 1 && quote.length > shown.length ? " …" : ""}
+            <Text key={i}>
+              <WithMentions line={line} />
+              {i === shown.length - 1 && quote.length > shown.length ? <Text dimColor> …</Text> : null}
             </Text>
           ))}
         </Box>
@@ -75,25 +94,25 @@ function Header({ replyTo, parent, dryRun }: Pick<ComposerProps, "replyTo" | "pa
 
 /** The text with an inverse block where the cursor is, one Text per line, the first behind the prompt mark. */
 function Lines({ state, placeholder }: { state: edit.EditState; placeholder: string }) {
-  const lines = state.value.split("\n");
-  let offset = 0;
+  const prompt = <Text color={colors.blue}>{glyphs.prompt} </Text>;
 
   if (state.value === "") {
     return (
       <Text>
-        <Text color={accent}>{glyphs.prompt} </Text>
+        {prompt}
         <Text inverse> </Text>
         <Text dimColor>{placeholder}</Text>
       </Text>
     );
   }
 
+  let offset = 0;
   return (
     <Box flexDirection="column">
-      {lines.map((line, i) => {
+      {state.value.split("\n").map((line, i) => {
         const start = offset;
         offset += line.length + 1;
-        const prefix = i === 0 ? <Text color={accent}>{glyphs.prompt} </Text> : <Text>{"  "}</Text>;
+        const prefix = i === 0 ? prompt : <Text>{"  "}</Text>;
         const column = state.cursor - start;
 
         if (column < 0 || column > line.length) {
@@ -119,33 +138,18 @@ function Lines({ state, placeholder }: { state: edit.EditState; placeholder: str
 }
 
 export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerProps) {
-  const { exit, suspendTerminal } = useApp();
+  const { exit } = useApp();
   const [state, setState] = useState(() => edit.empty(initial));
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [notice, setNotice] = useState<string | undefined>();
 
   const finish = (result: ComposeResult) => {
     onDone(result);
     exit();
   };
 
-  const openEditor = async () => {
-    let text: string | undefined;
-    await suspendTerminal(async () => {
-      try {
-        text = await editInEditor(state.value);
-      } catch (error) {
-        if (!(error instanceof Cancelled)) setNotice(error instanceof Error ? error.message : String(error));
-      }
-    });
-    if (text !== undefined) setState(edit.empty(text));
-  };
-
   usePaste((text) => setState((current) => edit.insert(current, text)));
 
   useInput((input, key) => {
-    setNotice(undefined);
-
     if (key.escape || (key.ctrl && input === "c")) {
       if (state.value.trim() === "" || confirmDiscard) return finish({ kind: "cancel" });
       setConfirmDiscard(true);
@@ -164,9 +168,6 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
 
     if (key.ctrl) {
       switch (input) {
-        case "g":
-          void openEditor();
-          return;
         case "a":
           return setState(edit.home(state));
         case "e":
@@ -195,23 +196,26 @@ export function Composer({ replyTo, parent, initial, dryRun, onDone }: ComposerP
     if (input !== "") setState(edit.insert(state, input));
   });
 
-  const send = dryRun ? "sign (dry run)" : "send";
-
   return (
     <Box flexDirection="column">
-      <Header replyTo={replyTo} parent={parent} dryRun={dryRun} />
-      <Box borderStyle="round" borderColor={accent} paddingX={1}>
+      <Header replyTo={replyTo} parent={parent} />
+      <Box borderStyle="round" borderColor={colors.blue} paddingX={1}>
         <Lines state={state} placeholder="Write your reply…" />
       </Box>
       <Box paddingX={2}>
         {confirmDiscard ? (
           <Text color="yellow">Press esc again to discard your reply.</Text>
-        ) : notice ? (
-          <Text color="red">{notice}</Text>
         ) : (
-          <Text dimColor>
-            <Text bold>enter</Text> {send} · <Text bold>\⏎</Text> new line · <Text bold>ctrl+g</Text> editor ·{" "}
-            <Text bold>esc</Text> cancel
+          <Text dimColor wrap="truncate-end">
+            {dryRun ? (
+              <>
+                <Text color="yellow" bold dimColor={false}>
+                  dry run
+                </Text>
+                {" · "}
+              </>
+            ) : null}
+            <Text bold>enter</Text> {dryRun ? "sign" : "send"} · <Text bold>\⏎</Text> new line · <Text bold>esc</Text> cancel
           </Text>
         )}
       </Box>
