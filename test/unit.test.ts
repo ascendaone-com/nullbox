@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseReplyArgs } from "../src/args.js";
+import { parseInboxArgs, parseReplyArgs } from "../src/args.js";
 import { buildPayload, commitIdFromLink, validateMessage, validateReplyTo } from "../src/commit.js";
 import { devnullUrl } from "../src/config.js";
 import { NullboxError, sanitize } from "../src/errors.js";
 import { keyId } from "../src/ssh.js";
+import { wrap } from "../src/ui/wrap.js";
 
 describe("devnullUrl", () => {
   it("defaults to dev-null.sh", () => {
@@ -87,5 +88,29 @@ describe("sanitize", () => {
 describe("keyId", () => {
   it("drops the comment", () => {
     expect(keyId("ssh-ed25519 AAAAC3Nza me@laptop\n")).toBe("ssh-ed25519 AAAAC3Nza");
+  });
+});
+
+describe("parseInboxArgs", () => {
+  it("reads --user and --dry-run", () => {
+    expect(parseInboxArgs([])).toEqual({ user: undefined, dryRun: false });
+    expect(parseInboxArgs(["--user", "@ascendaone-com", "--dry-run"])).toEqual({ user: "ascendaone-com", dryRun: true });
+  });
+
+  it("rejects a missing or odd username and unknown options", () => {
+    expect(() => parseInboxArgs(["--user"])).toThrow(NullboxError);
+    expect(() => parseInboxArgs(["--user", "a b"])).toThrow(NullboxError);
+    expect(() => parseInboxArgs(["--yes"])).toThrow(NullboxError);
+  });
+});
+
+describe("wrap", () => {
+  it("wraps at words, without a leading space on the next line", () => {
+    expect(wrap("reviewing the final details of a big release", 20)).toEqual(["reviewing the final", "details of a big", "release"]);
+  });
+
+  it("keeps paragraphs and splits words longer than the width", () => {
+    expect(wrap("one\n\ntwo", 20)).toEqual(["one", "", "two"]);
+    expect(wrap("https://dev-null.sh/@someone/commits/1234", 15)).toEqual(["https://dev-nul", "l.sh/@someone/c", "ommits/1234"]);
   });
 });

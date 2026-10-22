@@ -27,3 +27,17 @@ export function parseReplyArgs(argv: string[]): ReplyArgs {
 
   return { replyTo: validateReplyTo(replyTo), message: words.join(" "), dryRun };
 }
+
+export function parseInboxArgs(argv: string[]): { user?: string; dryRun: boolean } {
+  let user: string | undefined;
+  let dryRun = false;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--dry-run") dryRun = true;
+    else if (arg === "--user") {
+      user = argv[++i]?.replace(/^@/, "");
+      if (!user || !/^[A-Za-z0-9-]+$/.test(user)) throw new NullboxError("Usage: nullbox --user <your /dev/null username>");
+    } else throw new NullboxError(`Unknown option ${arg}. Run nullbox --help.`);
+  }
+  return { user, dryRun };
+}

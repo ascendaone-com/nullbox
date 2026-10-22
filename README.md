@@ -7,33 +7,32 @@ You've been heads-down with your agents for two hours. nullbox shows you the ten
 ```text
 $ nullbox
 
-  // nullbox — your /dev/null inbox           7 new · 3 mentions · 2 replies
+// nullbox · @you                                 2 new replies · 1 mention · 3 questions
 
-  #   FROM            WHAT
-  ─────────────────────────────────────────────────────────────────────
-  1   @arthur         replied: "AI agents are doing all my…"
-  2   @simonhamp      mentioned you: "How are people managing…"
-  3   @engineer42     replied: "I'm finding that reviewing AI…"
+  1 @you             ↩ 2 new replies  Reviewing AI code takes longer than writing it…  1h
+› 2 @engineer42      @ mentioned you  @you are you finding review heavier with more…  42m
+  3 @simonhamp       ? asks           How are people managing five agents at once?      2h
   …
-  10  @builder        replied: "Agent workflows are…"
 
-  [1-10] pick   [r] refresh   [q] quit
-  Select: 3
+  │ @engineer42 · 42m · 0be0130
+  │ @you are you finding review heavier with more agents running?
 
-  @engineer42 · 42m ago · 0be0130 · replying to your "Reviewing AI code…"
-  "I'm finding that reviewing AI-generated code takes longer than
-   writing it myself sometimes."
+  1-0 reply · ↑↓ move · o open · d done · r refresh · q quit
 
-  [enter] reply   [t] show thread   [o] open in browser   [d] done   [b] back
-  Your reply: I'm seeing something similar. Is review getting heavier
-              as you run more agents at once?
+  › 2
 
+// nullbox · replying to @engineer42                                            0be0130
+ │ @you are you finding review heavier with more agents running?
+
+╭──────────────────────────────────────────────────────────────────────────────────────╮
+│ › Much heavier. I've started batching reviews instead of watching each agent.█       │
+╰──────────────────────────────────────────────────────────────────────────────────────╯
   enter send · \⏎ new line · esc cancel
 ```
 
-Everything after `Select:` and `Your reply:` is typed by you. nullbox never suggests reply text.
+You type every reply yourself. nullbox never suggests reply text.
 
-> This mock shows where we're heading. nullbox isn't usable yet: see [Status](#status).
+> Pre-alpha. The list currently comes from public data. See [Status](#status).
 
 ## Why
 
@@ -52,11 +51,12 @@ What /dev/null supports today:
 | --- | --- | --- |
 | Post a reply as you | ✅ | `POST /api/cli/commits`, signed with your GitHub SSH key |
 | See which of your commits got new replies | ✅ | Public `GET /api/v1/users/{you}/commits` (`replies_count`) |
-| Read replies, mentions and notifications | ⏳ | Signed `GET /api/v1/notifications`. This needs an approved *device* key, and today only the official mobile app can get one. |
+| Mentions, questions and busy threads from people you follow | ✅ | Public `GET /api/v1/users/{you}/following`, then each person's commits |
+| Read the replies themselves, and every notification | ⏳ | Signed `GET /api/v1/notifications`. This needs an approved *device* key, and today only the official mobile app can get one. |
 
 Closing that last gap means contributing a CLI sign-in flow upstream. See [docs/devnull-api.md](docs/devnull-api.md).
 
-## Try it (0.1, replies only)
+## Try it
 
 nullbox isn't on npm yet. To run it from a checkout:
 
@@ -65,6 +65,41 @@ git clone https://github.com/ascendaone-com/nullbox.git && cd nullbox
 npm install
 npm link            # puts `nullbox` on your PATH
 ```
+
+### Your inbox
+
+```bash
+nullbox             # asks for your /dev/null username once, then remembers it
+nullbox --dry-run   # same, but replies are signed and not sent
+```
+
+```text
+// nullbox · @ascendaone-com                           1 new reply · 8 questions
+
+  1 @ascendaone-com  ↩ 1 new reply    Thanks @nunomaduro for creating this!   11h b06d99e
+› 2 @nunomaduro      ? asks           who wants the ability of upload 1 min…   3h f2c3ce7
+  3 @kachelle        ? asks           waarom volgt @calebporzio @gdebrauwer…   3h b7c1764
+  …
+  0 @nunomaduro      ● 20 replies     i would advice you all to curate your…   9h 7e91958
+
+  │ @nunomaduro · 3h · f2c3ce7
+  │ who wants the ability of upload 1 min videos to this app? not reels or
+  │ shorts, just regular posts with max 1 minute videos
+
+  1-0 reply · ↑↓ move · o open · d done · r refresh · q quit
+```
+
+Press a number (`0` is the tenth), or move with the arrows and press enter. That opens the reply box, and after you send you're back at the list. Anything you reply to, open or mark done (`d`) stays out of the list from then on.
+
+Until /dev/null lets a CLI read notifications, the inbox is built from **public data**:
+
+- new replies on your own commits (you'll see how many, and `o` opens them to read)
+- commits that `@mention` you
+- questions and busy threads from people you follow, from the last three days
+
+A refresh makes about one request per person you follow, which stays well inside /dev/null's limit of 60 a minute. The commits of people you follow are reused for a minute.
+
+### One reply
 
 Reply to a commit by its hash or its link:
 

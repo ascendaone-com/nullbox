@@ -57,7 +57,8 @@ src/
 - `nullbox login` asks for your /dev/null username once. It's confirmed by the key lookup, which proves the key is yours.
 - The source polls your recent commits, diffs `replies_count` against state, and queues "N new replies on <commit>".
 - `nullbox` lists the top 10. Picking one shows the commit: `enter` replies to the thread and `o` opens it on dev-null.sh. Until M3, `o` is the only way to read what people actually said.
-- **Limit:** we can see *that* someone replied, but not who or what they said. This is honest but thin, and M3 fixes it.
+- Built: the source also reads who you follow (`GET /api/v1/users/{you}/following`) and their recent commits, so the list holds mentions of you, questions and busy threads, ranked as below. `d` marks an item done, and replying or opening an item marks it handled, in `state.json`.
+- **Limit:** for your own commits we can see *that* someone replied, but not who or what they said. `o` opens the thread in the browser. M3 fixes this.
 
 ### M3: Full inbox (blocked upstream)
 - Land a CLI sign-in flow in dev-null.sh (see [devnull-api.md](devnull-api.md#proposed-upstream-contribution)).

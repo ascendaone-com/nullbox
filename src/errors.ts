@@ -3,6 +3,18 @@ export class NullboxError extends Error {
   override name = "NullboxError";
 }
 
+/** /dev/null answered with an error status. The message is its answer, or a generic one. */
+export class HttpError extends NullboxError {
+  override name = "HttpError";
+
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 /** The user backed out. Nothing was sent. */
 export class Cancelled extends Error {
   override name = "Cancelled";

@@ -1,4 +1,4 @@
-import { NullboxError, sanitize } from "./errors.js";
+import { HttpError, NullboxError, sanitize } from "./errors.js";
 
 export interface Response {
   status: number;
@@ -23,7 +23,7 @@ export async function request(url: string, init: RequestInit & { timeoutMs?: num
   const body = sanitize(await response.text()).trim();
 
   if (response.status < 200 || response.status > 299) {
-    throw new NullboxError(body !== "" ? body : `Unexpected answer from ${origin} (HTTP ${response.status}).`);
+    throw new HttpError(body !== "" ? body : `Unexpected answer from ${origin} (HTTP ${response.status}).`, response.status);
   }
 
   return { status: response.status, body };

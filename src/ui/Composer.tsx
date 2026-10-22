@@ -1,7 +1,8 @@
-import { Box, Text, useApp, useInput, usePaste } from "ink";
+import { Box, Text, useApp, useInput, usePaste, useWindowSize } from "ink";
 import { useState } from "react";
 import * as edit from "./editing.js";
 import { colors, glyphs } from "./theme.js";
+import { wrap } from "./wrap.js";
 
 export interface Parent {
   username?: string;
@@ -49,7 +50,8 @@ function WithMentions({ line }: { line: string }) {
 }
 
 function Header({ replyTo, parent }: Pick<ComposerProps, "replyTo" | "parent">) {
-  const quote = (parent?.body ?? "").trim().split("\n");
+  const { columns } = useWindowSize();
+  const quote = wrap((parent?.body ?? "").trim().replace(/\n{3,}/g, "\n\n"), columns - 4);
   const shown = quote.slice(0, MAX_QUOTE_LINES);
   const target = parent?.username ? `@${parent.username}` : replyTo;
 

@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { styleText } from "node:util";
-import { parseReplyArgs } from "./args.js";
+import { parseInboxArgs, parseReplyArgs } from "./args.js";
 import { commit, commitIdFromLink } from "./commit.js";
 import { devnullUrl } from "./config.js";
 import { NullboxError, sanitize } from "./errors.js";
 import { request } from "./http.js";
-import { compose, type Parent } from "./ui/compose.js";
+import { fetchInbox } from "./inbox.js";
+import { openInBrowser } from "./open.js";
+import { loadConfig, loadState, saveConfig, saveState } from "./store.js";
+import { askUsername, compose, inbox, type Parent } from "./ui/app.js";
 import { glyphs } from "./ui/theme.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -14,12 +17,19 @@ const { version } = createRequire(import.meta.url)("../package.json") as { versi
 const HELP = `nullbox ${version} — your /dev/null inbox, in the terminal
 
 Usage:
-  nullbox reply <hash|link> [message]   Reply to a commit on /dev/null
-  nullbox --version
+  nullbox [--user <name>] [--dry-run]   Your top 10 conversations, ready to reply to
+  nullbox reply <hash|link> [message]   Reply to one commit
+  nullbox --help | --version
 
-Options for reply:
-  --dry-run   Find your key and sign the reply, but don't send it
-  --          End options, for a message that starts with --
+Options:
+  --user <name>   Your /dev/null username (asked once, then remembered)
+  --dry-run       Find your key and sign replies, but don't send them
+  --              End options, for a message that starts with --
+
+The inbox:
+  1-0 or enter  reply          o  open in your browser
+  ↑ ↓           move           d  done (hide it)
+  r             refresh        q  quit
 
 Writing a reply:
   enter         send
@@ -30,7 +40,9 @@ Your reply is signed with the SSH key on your GitHub account, the same way
 https://dev-null.sh/commit does it. To find that key, nullbox sends your
 *public* keys to /dev/null. Private keys never leave ssh-keygen or your agent.
 
-The inbox (nullbox with no arguments) lands in 0.2.
+Until /dev/null lets a CLI read notifications, the inbox is built from public
+data: new replies on your commits, commits that mention you, and recent
+conversations from people you follow.
 `;
 
 const dim = (text: string) => styleText("dim", text);
@@ -74,9 +86,7 @@ async function reply(argv: string[]): Promise<void> {
   const baseUrl = devnullUrl();
   const args = parseReplyArgs(argv);
 
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new NullboxError("nullbox only sends from an interactive terminal, so you can check the reply before it goes.");
-  }
+  requireTerminal();
 
   const parent = await fetchParent(baseUrl, args.replyTo);
   console.log();
@@ -88,12 +98,17 @@ async function reply(argv: string[]): Promise<void> {
     return;
   }
 
+  console.log(`\n  ${await send(baseUrl, args.replyTo, result.text, args.dryRun)}`);
+}
+
+/** Signs and sends a reply, showing each step, and returns the line that says how it went. */
+async function send(baseUrl: string, replyTo: string, message: string, dryRun: boolean): Promise<string> {
   console.log();
   const sent = await commit({
     baseUrl,
-    replyTo: args.replyTo,
-    message: result.text,
-    dryRun: args.dryRun,
+    replyTo,
+    message,
+    dryRun,
     onStep: (name, detail) => {
       if (name === "lookup") step("Finding your GitHub SSH key…");
       if (name === "sign") step(`Signing with ${shortKey(detail ?? "")}`);
@@ -101,13 +116,77 @@ async function reply(argv: string[]): Promise<void> {
     },
   });
 
-  if (args.dryRun) {
+  if (dryRun) {
     console.log(`\n  ${styleText(["yellow", "bold"], "Dry run:")} signed and not sent. The signed payload was:`);
     for (const line of sanitize(sent.payload).split("\n")) console.log(`  ${dim(glyphs.quote)} ${line}`);
-    return;
+    return `${glyphs.ok} Dry run signed, nothing sent.`;
   }
 
-  console.log(`\n  ${styleText("green", glyphs.ok)} ${sent.response ?? "Sent."}`);
+  return `${glyphs.ok} ${sent.response ?? "Sent."}`;
+}
+
+function requireTerminal(): void {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    throw new NullboxError("nullbox needs an interactive terminal, so you can check every reply before it goes.");
+  }
+}
+
+/**
+ * The inbox loop: the list, then the composer for whatever you pick, then the list again with how it went. What you
+ * reply to, open or mark done is remembered, so it doesn't come back.
+ */
+async function inboxLoop(argv: string[]): Promise<void> {
+  const baseUrl = devnullUrl();
+  const args = parseInboxArgs(argv);
+  requireTerminal();
+
+  const config = await loadConfig();
+  if (args.user && args.user !== config.username) await saveConfig({ ...config, username: args.user });
+  const username = args.user ?? config.username ?? (await askUsername());
+  if (!username) return;
+  if (!config.username && !args.user) await saveConfig({ ...config, username });
+
+  const state = await loadState();
+  const markHandled = async (item: { id: string; reason: string; replies: number }) => {
+    if (item.reason === "replies") state.seenReplies[item.id] = item.replies;
+    else state.done[item.id] = new Date().toISOString();
+    await saveState(state);
+  };
+
+  let flash: string | undefined;
+  for (;;) {
+    console.log();
+    const action = await inbox({
+      username,
+      flash,
+      load: () => fetchInbox(baseUrl, username, state),
+      onOpen: (item) => {
+        if (item.reason === "replies") void markHandled(item);
+        return openInBrowser(item.url, baseUrl);
+      },
+      onDismiss: (item) => void markHandled(item),
+    });
+    flash = undefined;
+    if (action.kind === "quit") return;
+
+    const { item } = action;
+    console.log();
+    const result = await compose({
+      replyTo: item.url,
+      parent: { username: item.author, shortHash: item.shortHash, body: item.body },
+      initial: "",
+      dryRun: args.dryRun,
+    });
+    if (result.kind === "cancel") continue;
+
+    try {
+      flash = await send(baseUrl, item.url, result.text, args.dryRun);
+      if (!args.dryRun) await markHandled(item);
+    } catch (error) {
+      if (!(error instanceof NullboxError)) throw error;
+      flash = `${glyphs.fail} ${sanitize(error.message)}`;
+    }
+  }
 }
 
 async function main(argv: string[]): Promise<number> {
@@ -123,12 +202,19 @@ async function main(argv: string[]): Promise<number> {
         console.log(version);
         return 0;
       case undefined:
+      case "inbox":
+        await inboxLoop(rest);
+        return 0;
       case "-h":
       case "--help":
       case "help":
         process.stdout.write(HELP);
         return 0;
       default:
+        if (command.startsWith("--")) {
+          await inboxLoop(argv);
+          return 0;
+        }
         throw new NullboxError(`Unknown command ${command}. Run nullbox --help.`);
     }
   } catch (error) {

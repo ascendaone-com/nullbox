@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { commit, NAMESPACE } from "../src/commit.js";
-import { NullboxError } from "../src/errors.js";
+import { HttpError } from "../src/errors.js";
 import { candidateKeys, keyId, sign } from "../src/ssh.js";
 
 /** A throwaway ~/.ssh with one Ed25519 key, and a fake /dev/null that verifies signatures like the real one. */
@@ -105,8 +105,8 @@ describe("commit", () => {
     execFileSync("mkdir", ["-p", otherDir]);
     execFileSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", join(otherDir, "id_ed25519")]);
 
-    await expect(commit({ baseUrl, sshDir: otherDir, useAgent: false, replyTo: "0be0130", message: "hi" })).rejects.toThrow(
-      new NullboxError("None of your keys is on GitHub."),
-    );
+    const failure = commit({ baseUrl, sshDir: otherDir, useAgent: false, replyTo: "0be0130", message: "hi" });
+    await expect(failure).rejects.toBeInstanceOf(HttpError);
+    await expect(failure).rejects.toMatchObject({ status: 404, message: "None of your keys is on GitHub." });
   });
 });

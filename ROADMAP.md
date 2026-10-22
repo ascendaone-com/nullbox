@@ -2,8 +2,8 @@
 
 | Phase | What | Status |
 | --- | --- | --- |
-| **0.1** | `nullbox reply <hash> [msg]`: signed replies from the terminal, with no curl-pipe-bash | in testing |
-| **0.2** | `nullbox`: top-10 queue from public data ("new replies on your commits"), with a local needs-reply state | planned |
+| **0.1** | `nullbox reply <hash> [msg]`: signed replies from the terminal, with no curl-pipe-bash | done |
+| **0.2** | `nullbox`: top-10 queue from public data (new replies on your commits, mentions, questions from people you follow), with a local done/seen state | in testing |
 | **upstream** | CLI sign-in flow for dev-null.sh (a loopback redirect or device code), proposed as an issue and PR | to propose |
 | **0.3** | Full inbox: replies, mentions and quotes, with text, author and age. Reply in place. | blocked on upstream |
 | **0.4** | Done/snooze, `--json`, `nullbox status` count | planned |
