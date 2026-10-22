@@ -7,27 +7,48 @@ You've been heads-down with your agents for two hours. nullbox shows you the ten
 ```text
 $ nullbox
 
-// nullbox · @you                                 2 new replies · 1 mention · 3 questions
+// nullbox · @you                              2 new replies · 1 mention · 4 questions
 
-  1 @you             ↩ 2 new replies  Reviewing AI code takes longer than writing it…  1h
-› 2 @engineer42      @ mentioned you  @you are you finding review heavier with more…  42m
-  3 @simonhamp       ? asks           How are people managing five agents at once?      2h
-  …
+  1 @you             ↩ 2 new replies  Reviewing agent output takes longer…  1h b06d99e
+› 2 @engineer42      @ mentioned you  @you how do you cap concurrency? I … 41m 0be0130
+  3 @devlin          ? asks           How are people managing five agents…  2h f2c3ce7
+  4 @mara-k          ? asks           Anyone else batching reviews instea…  3h 8edc1f4
+  5 @tamsin          ● 14 replies     Hot take: the bottleneck moved from…  4h 7e91958
+  6 @oskar           ? asks           What's your terminal setup for long…  4h c7c6ed0
+  7 @priya           ? asks           Do you keep agents on separate bran…  5h a41f0c2
+  8 @lee             following        Shipped a tiny CLI for tailing agen…  6h 5ad0532
+  9 @ren             following        Rails autoscaling on CPU and respon…  7h e1188ba
+  0 @noor            following        OpenTelemetry tracing without touch…  8h 9c3d7aa
 
-  │ @engineer42 · 42m · 0be0130
-  │ @you are you finding review heavier with more agents running?
+  │ @engineer42 · 41m · 0be0130
+  │ @you how do you cap concurrency? I tried this:
+  │ ┌─ ts
+  │ │ const limit = pLimit(4);
+  │ │ await Promise.all(jobs.map((job) => limit(() => run(job))));
+  │ └─
+  │ but the review queue still explodes.
 
   1-0 reply · ↑↓ move · o open · d done · r refresh · q quit
+```
 
-  › 2
+Press `2`, and reply right there. Code blocks are highlighted as you type:
 
-// nullbox · replying to @engineer42                                            0be0130
- │ @you are you finding review heavier with more agents running?
+```text
+// nullbox · replying to @engineer42                                           0be0130
+ │ @you how do you cap concurrency? I tried this:
+ │ ┌─ ts
+ │ │ const limit = pLimit(4);
+ │ │ await Promise.all(jobs.map((job) => limit(() => run(job))));
+ │ └─
+ │ but the review queue still explodes.
 
-╭──────────────────────────────────────────────────────────────────────────────────────╮
-│ › Much heavier. I've started batching reviews instead of watching each agent.█       │
-╰──────────────────────────────────────────────────────────────────────────────────────╯
-  enter send · \⏎ new line · esc cancel
+╭────────────────────────────────────────────────────────────────────────────────────╮
+│ › Cap the review side too. I gate merges, not runs:                                │
+│   ```ts                                                                            │
+│ │ const reviews = pLimit(2);                                                       │
+│   ```█                                                                             │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+  enter send · \⏎ new line · ``` code · esc cancel
 ```
 
 You type every reply yourself. nullbox never suggests reply text.
@@ -73,23 +94,7 @@ nullbox             # asks for your /dev/null username once, then remembers it
 nullbox --dry-run   # same, but replies are signed and not sent
 ```
 
-```text
-// nullbox · @ascendaone-com                           1 new reply · 8 questions
-
-  1 @ascendaone-com  ↩ 1 new reply    Thanks @nunomaduro for creating this!   11h b06d99e
-› 2 @nunomaduro      ? asks           who wants the ability of upload 1 min…   3h f2c3ce7
-  3 @kachelle        ? asks           waarom volgt @calebporzio @gdebrauwer…   3h b7c1764
-  …
-  0 @nunomaduro      ● 20 replies     i would advice you all to curate your…   9h 7e91958
-
-  │ @nunomaduro · 3h · f2c3ce7
-  │ who wants the ability of upload 1 min videos to this app? not reels or
-  │ shorts, just regular posts with max 1 minute videos
-
-  1-0 reply · ↑↓ move · o open · d done · r refresh · q quit
-```
-
-Press a number (`0` is the tenth), or move with the arrows and press enter. That opens the reply box, and after you send you're back at the list. Anything you reply to, open or mark done (`d`) stays out of the list from then on.
+It opens on the list shown at the top of this page. Press a number (`0` is the tenth), or move with the arrows and press enter. That opens the reply box, and after you send you're back at the list. Anything you reply to, open or mark done (`d`) stays out of the list from then on.
 
 Until /dev/null lets a CLI read notifications, the inbox is built from **public data**:
 
@@ -132,19 +137,7 @@ nullbox reply --dry-run 0be0130 'test'    # finds your key and signs, but sends 
 
 Passing a link shows who you're replying to and what they said.
 
-**Code.** /dev/null renders Markdown code: fenced blocks (```` ```ts ````, ```` ```go ````, …) and inline `` `code` ``. nullbox follows the same rule as the site for what counts as code. It highlights a block as you type it (about 37 common languages), keeps tabs and blank lines inside code, and frames and colours code wherever it shows a commit. A counter appears as you get near /dev/null's 4,000-character limit.
-
-```text
-╭──────────────────────────────────────────────────────────────╮
-│ › Like this:                                                 │
-│   ```go                                                      │
-│ │ func main() {                                              │
-│ │   fmt.Println("hi") // greet                               │
-│ │ }                                                          │
-│   ```█                                                       │
-╰──────────────────────────────────────────────────────────────╯
-  enter send · \⏎ new line · ``` code · esc cancel
-```
+**Code.** /dev/null renders Markdown code: fenced blocks (```` ```ts ````, ```` ```go ````, …) and inline `` `code` ``. nullbox follows the same rule as the site for what counts as code. It highlights a block as you type it (about 37 common languages), keeps tabs and blank lines inside code, and frames and colours code wherever it shows a commit. A counter appears as you get near /dev/null's 4,000-character limit. See the second screen at the top of this page.
 
 Once it's published, this will be `npx nullbox`.
 
