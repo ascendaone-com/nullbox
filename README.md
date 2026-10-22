@@ -7,47 +7,47 @@ You've been heads-down with your agents for two hours. nullbox shows you the ten
 ```text
 $ nullbox
 
-// nullbox · @you                              2 new replies · 1 mention · 4 questions
+// nullbox · @you    2 new replies · 1 mention · 4 questions
 
-  1 @you             ↩ 2 new replies  Reviewing agent output takes longer…  1h b06d99e
-› 2 @engineer42      @ mentioned you  @you how do you cap concurrency? I … 41m 0be0130
-  3 @devlin          ? asks           How are people managing five agents…  2h f2c3ce7
-  4 @mara-k          ? asks           Anyone else batching reviews instea…  3h 8edc1f4
-  5 @tamsin          ● 14 replies     Hot take: the bottleneck moved from…  4h 7e91958
-  6 @oskar           ? asks           What's your terminal setup for long…  4h c7c6ed0
-  7 @priya           ? asks           Do you keep agents on separate bran…  5h a41f0c2
-  8 @lee             following        Shipped a tiny CLI for tailing agen…  6h 5ad0532
-  9 @ren             following        Rails autoscaling on CPU and respon…  7h e1188ba
-  0 @noor            following        OpenTelemetry tracing without touch…  8h 9c3d7aa
+  1 @you         ↩ 2 new   Reviewing agent output takes…  1h
+› 2 @engineer42  @ you     @you how do you cap concurre… 41m
+  3 @devlin      ? asks    How are people managing five…  2h
+  4 @mara-k      ? asks    Anyone else batching reviews…  3h
+  5 @tamsin      ● 14      Hot take: the bottleneck mov…  4h
+  6 @oskar       ? asks    What's your terminal setup f…  4h
+  7 @priya       ? asks    Do you keep agents on separa…  5h
+  8 @lee         following Shipped a tiny CLI for taili…  6h
+  9 @ren         following Rails autoscaling on CPU and…  7h
+  0 @noor        following OpenTelemetry tracing withou…  8h
 
   │ @engineer42 · 41m · 0be0130
   │ @you how do you cap concurrency? I tried this:
   │ ┌─ ts
   │ │ const limit = pLimit(4);
-  │ │ await Promise.all(jobs.map((job) => limit(() => run(job))));
+  │ │ await Promise.all(jobs.map((j) => limit(run, j)));
   │ └─
   │ but the review queue still explodes.
 
-  1-0 reply · ↑↓ move · o open · d done · r refresh · q quit
+  1-0 reply · o open · d done · r refresh · q quit
 ```
 
 Press `2`, and reply right there. Code blocks are highlighted as you type:
 
 ```text
-// nullbox · replying to @engineer42                                           0be0130
+// nullbox · replying to @engineer42                 0be0130
  │ @you how do you cap concurrency? I tried this:
  │ ┌─ ts
  │ │ const limit = pLimit(4);
- │ │ await Promise.all(jobs.map((job) => limit(() => run(job))));
+ │ │ await Promise.all(jobs.map((j) => limit(run, j)));
  │ └─
  │ but the review queue still explodes.
 
-╭────────────────────────────────────────────────────────────────────────────────────╮
-│ › Cap the review side too. I gate merges, not runs:                                │
-│   ```ts                                                                            │
-│ │ const reviews = pLimit(2);                                                       │
-│   ```█                                                                             │
-╰────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────╮
+│ › Cap the review side too. I gate merges, not runs:      │
+│   ```ts                                                  │
+│ │ const reviews = pLimit(2);                             │
+│   ```█                                                   │
+╰──────────────────────────────────────────────────────────╯
   enter send · \⏎ new line · ``` code · esc cancel
 ```
 

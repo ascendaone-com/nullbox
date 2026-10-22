@@ -93,3 +93,25 @@ describe("Inbox", () => {
     expect(actions).toEqual([{ kind: "quit" }]);
   });
 });
+
+describe("Inbox in a narrow terminal", () => {
+  it("uses short tags and a shorter hint so the message keeps room, and nothing passes 60 columns", async () => {
+    const probe = render(<></>);
+    const prototype = Object.getPrototypeOf(probe.stdout) as object;
+    const original = Object.getOwnPropertyDescriptor(prototype, "columns");
+    Object.defineProperty(prototype, "columns", { get: () => 60, configurable: true });
+    try {
+      const { lastFrame } = setup();
+      await tick();
+      const frame = lastFrame() ?? "";
+      expect(frame).toContain("@ you");
+      expect(frame).not.toContain("mentioned you");
+      expect(frame).not.toContain("↑↓");
+      expect(frame).toContain("q quit");
+      expect(Math.max(...frame.split("\n").map((line) => [...line].length))).toBeLessThanOrEqual(60);
+    } finally {
+      if (original) Object.defineProperty(prototype, "columns", original);
+      probe.unmount();
+    }
+  });
+});

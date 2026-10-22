@@ -18,16 +18,17 @@ export interface InboxProps {
   flash?: string;
 }
 
-const TAGS: Record<Reason, { color: string; text: (item: Item) => string }> = {
-  replies: { color: "green", text: (item) => `↩ ${plural(item.newReplies, "new reply", "new replies")}` },
-  mention: { color: colors.blue, text: () => "@ mentioned you" },
-  question: { color: "yellow", text: () => "? asks" },
-  active: { color: colors.slash1, text: (item) => `● ${item.replies} replies` },
-  following: { color: "gray", text: () => "following" },
+/** Each kind of item's tag, in full and in the short form narrow terminals get. */
+const TAGS: Record<Reason, { color: string; text: (item: Item) => string; short: (item: Item) => string }> = {
+  replies: { color: "green", text: (item) => `↩ ${plural(item.newReplies, "new reply", "new replies")}`, short: (item) => `↩ ${item.newReplies} new` },
+  mention: { color: colors.blue, text: () => "@ mentioned you", short: () => "@ you" },
+  question: { color: "yellow", text: () => "? asks", short: () => "? asks" },
+  active: { color: colors.slash1, text: (item) => `● ${item.replies} replies`, short: (item) => `● ${item.replies}` },
+  following: { color: "gray", text: () => "following", short: () => "following" },
 };
 
-const TAG_WIDTH = 16;
-const AUTHOR_WIDTH = 16;
+/** Column widths: roomy from 80 columns, tighter below, so the message keeps a fair share of a narrow terminal. */
+const WIDTHS = { full: { author: 16, tag: 16 }, compact: { author: 12, tag: 9 } };
 
 function firstLine(body: string): string {
   return body.split("\n").find((line) => line.trim() !== "") ?? "";
@@ -41,6 +42,7 @@ function fit(text: string, width: number): string {
 
 function Row({ item, index, selected, wide }: { item: Item; index: number; selected: boolean; wide: boolean }) {
   const tag = TAGS[item.reason];
+  const widths = wide ? WIDTHS.full : WIDTHS.compact;
   const number = (index === 9 ? "0" : String(index + 1)).padStart(2);
   return (
     <Box>
@@ -50,8 +52,8 @@ function Row({ item, index, selected, wide }: { item: Item; index: number; selec
         <Text bold={selected} dimColor={!selected}>
           {number}{" "}
         </Text>
-        <Text bold={selected}>{fit(`@${item.author}`, AUTHOR_WIDTH)} </Text>
-          <Text color={tag.color}>{fit(tag.text(item), TAG_WIDTH)} </Text>
+        <Text bold={selected}>{fit(`@${item.author}`, widths.author)} </Text>
+          <Text color={tag.color}>{fit((wide ? tag.text : tag.short)(item), widths.tag)} </Text>
         </Text>
       </Box>
       <Box flexGrow={1} flexShrink={1} flexBasis={0}>
@@ -180,7 +182,8 @@ export function Inbox({ username, load, onOpen, onDismiss, onDone, flash }: Inbo
       <Box marginTop={1} paddingX={2} flexDirection="column">
         {notice ? <Text color={notice.startsWith(glyphs.ok) ? "green" : notice.startsWith(glyphs.fail) ? "red" : undefined}>{notice}</Text> : null}
         <Text dimColor wrap="truncate-end">
-          <Text bold>1-0</Text> reply · <Text bold>↑↓</Text> move · <Text bold>o</Text> open · <Text bold>d</Text> done ·{" "}
+          <Text bold>1-0</Text> reply · {columns >= 66 ? <><Text bold>↑↓</Text> move · </> : null}<Text bold>o</Text> open ·{" "}
+          <Text bold>d</Text> done ·{" "}
           <Text bold>r</Text> refresh · <Text bold>q</Text> quit
         </Text>
       </Box>
